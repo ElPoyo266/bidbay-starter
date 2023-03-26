@@ -15,9 +15,6 @@ const error = ref(null);
 
 let userId = computed(() => route.params.userId);
 
-/**
- * @param {Date} date
- */
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString();
 };

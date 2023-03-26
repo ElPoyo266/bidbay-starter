@@ -1,15 +1,6 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../database.js'
 
-/**
- * @typedef {Object} UserObject
- * @property {string} id
- * @property {string} username
- * @property {string} email
- * @property {string} password
- * @property {boolean} admin
- */
-
 export default sequelize.define('User', {
   id: {
     type: DataTypes.UUID,
