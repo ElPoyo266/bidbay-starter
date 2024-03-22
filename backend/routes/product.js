@@ -8,7 +8,7 @@ import { sequelize } from "../orm/database.js";
 const router = express.Router()
 
 router.get('/api/products', async (req, res, next) => {
-  const product = await Product.findAll({
+  const products = await Product.findAll({
     include: [{
       model: User,
       as: 'seller',
@@ -19,6 +19,12 @@ router.get('/api/products', async (req, res, next) => {
       attributes: ['id', 'price', 'productId', 'date']
     }]
   })
+
+  if (product === null) {
+    res.status(400).send('Error : No products found')
+  } else {
+    res.status(200).send(products)
+  }
 })
 
 router.get('/api/products/:productId', async (req, res) => {
