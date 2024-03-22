@@ -91,7 +91,7 @@ fetchProduct();
   <div class="row justify-content-center">
     <div class="col-md-6">
       <form @submit.prevent="edit">
-        <div class="alert alert-danger mt-4" role="alert" data-test-error>
+        <div class="alert alert-danger mt-4" role="alert" data-test-error v-if="error">
           Une erreur est survenue
         </div>
 
@@ -103,6 +103,7 @@ fetchProduct();
             id="product-name"
             required
             data-test-product-name
+            v-model="productData.name"
           />
         </div>
 
@@ -117,6 +118,7 @@ fetchProduct();
             rows="3"
             required
             data-test-product-description
+            v-model="productData.description"
           ></textarea>
         </div>
 
@@ -128,6 +130,7 @@ fetchProduct();
             id="product-category"
             required
             data-test-product-category
+            v-model="productData.category"
           />
         </div>
 
@@ -145,6 +148,7 @@ fetchProduct();
               min="0"
               required
               data-test-product-price
+              v-model="productData.originalPrice"
             />
             <span class="input-group-text">€</span>
           </div>
@@ -161,6 +165,7 @@ fetchProduct();
             name="pictureUrl"
             required
             data-test-product-picture
+            v-model="productData.pictureUrl"
           />
         </div>
 
@@ -175,6 +180,7 @@ fetchProduct();
             name="endDate"
             required
             data-test-product-end-date
+            v-model="productData.endDate"
           />
         </div>
 
@@ -182,11 +188,12 @@ fetchProduct();
           <button
             type="submit"
             class="btn btn-primary"
-            disabled
+            :disabled="loading"
             data-test-submit
           >
             Modifier le produit
             <span
+              v-if="loading"
               class="spinner-border spinner-border-sm"
               role="status"
               aria-hidden="true"

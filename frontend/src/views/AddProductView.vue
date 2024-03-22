@@ -63,6 +63,7 @@ if (!isAuthenticated.value) {
             id="product-name"
             required
             data-test-product-name
+            v-model="productData.name"
           />
         </div>
 
@@ -77,6 +78,7 @@ if (!isAuthenticated.value) {
             rows="3"
             required
             data-test-product-description
+            v-model="productData.description"
           ></textarea>
         </div>
 
@@ -88,6 +90,7 @@ if (!isAuthenticated.value) {
             id="product-category"
             required
             data-test-product-category
+            v-model="productData.category"
           />
         </div>
 
@@ -105,6 +108,7 @@ if (!isAuthenticated.value) {
               min="0"
               required
               data-test-product-price
+              v-model="productData.originalPrice"
             />
             <span class="input-group-text">€</span>
           </div>
@@ -121,6 +125,7 @@ if (!isAuthenticated.value) {
             name="pictureUrl"
             required
             data-test-product-picture
+            v-model="productData.pictureUrl"
           />
         </div>
 
@@ -135,6 +140,7 @@ if (!isAuthenticated.value) {
             name="endDate"
             required
             data-test-product-end-date
+            v-model="productData.endDate"
           />
         </div>
 
@@ -142,7 +148,6 @@ if (!isAuthenticated.value) {
           <button
             type="submit"
             class="btn btn-primary"
-            disabled
             data-test-submit
           >
             Ajouter le produit
@@ -151,6 +156,7 @@ if (!isAuthenticated.value) {
               class="spinner-border spinner-border-sm"
               role="status"
               aria-hidden="true"
+              v-if="spinner"
             ></span>
           </button>
         </div>
