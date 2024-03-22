@@ -5,12 +5,44 @@ import { ref } from "vue";
 
 const { isAuthenticated, token } = useAuthStore();
 const router = useRouter();
-
+let errorMessage = ref("");
+let spinner = ref(false);
+let productData = {
+  name: "",
+  description: "",
+  category: "",
+  originalPrice: 0,
+  pictureUrl: "",
+  endDate: "",
+};
+async function addProduct() {
+  errorMessage.value = false;
+  spinner.value = true;
+  try {
+    const res = await fetch(`http://localhost:3000/api/products`, {
+      method: "POST",
+      body: JSON.stringify(productData),
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const product = await res.json();
+    await router.push({
+      name: "Product",
+      params: { productId: product.id },
+    });
+  } catch (e) {
+    errorMessage.value=true
+  } finally {
+    spinner.value = false;
+  }
+}
 if (!isAuthenticated.value) {
   router.push({ name: "Login" });
 }
 
-// router.push({ name: "Product", params: { productId: 'TODO } });
+
 </script>
 
 <template>
@@ -18,7 +50,7 @@ if (!isAuthenticated.value) {
 
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <form>
+      <form @submit.prevent="addProduct">
         <div class="alert alert-danger mt-4" role="alert" data-test-error>
           Une erreur s'est produite
         </div>

@@ -11,7 +11,78 @@ if (!isAuthenticated.value) {
   router.push({ name: "Login" });
 }
 
+const loading = ref(false);
+const error = ref(false);
+let productData = ref({
+  name: "",
+  description: "",
+  category: "",
+  originalPrice: 0,
+  pictureUrl: "",
+  endDate: "",
+});
 const productId = ref(route.params.productId);
+function buildProductData(data) {
+  productData.value.name = data.name;
+  productData.value.description = data.description;
+  productData.value.category = data.category;
+  productData.value.originalPrice = data.originalPrice;
+  productData.value.pictureUrl = data.pictureUrl;
+  productData.value.endDate = formatDate(data.endDate);
+}
+async function fetchProduct() {
+  loading.value = true;
+  error.value = false;
+  try {
+    const res = await fetch(
+        `http://localhost:3000/api/products/${productId.value}`
+    );
+    buildProductData(await res.json());
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function edit() {
+  loading.value = true;
+  error.value = false;
+  try {
+    const res = await fetch(
+        `http://localhost:3000/api/products/${productId.value}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(productData.value),
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+            "Content-Type": "application/json",
+          },
+        }
+    );
+    const data = await res.json();
+    await router.push({
+      name: "ProductEdition",
+      params: { productId: data.id },
+    });
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+function formatDate(date) {
+  const dateObject = new Date(date);
+  const month =
+      dateObject.getMonth() > 9
+          ? dateObject.getMonth()
+          : "0" + dateObject.getMonth();
+  const day =
+      dateObject.getDay() > 9 ? dateObject.getDay() : "0" + dateObject.getDay();
+  return `${dateObject.getFullYear()}-${month}-${day}`;
+}
+fetchProduct();
+
 </script>
 
 <template>
@@ -19,7 +90,7 @@ const productId = ref(route.params.productId);
 
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <form>
+      <form @submit.prevent="edit">
         <div class="alert alert-danger mt-4" role="alert" data-test-error>
           Une erreur est survenue
         </div>
