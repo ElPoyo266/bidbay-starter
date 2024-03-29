@@ -112,7 +112,7 @@ const filteredProductsList = computed(() => {
         <div class="card">
           <RouterLink :to="{ name: 'Product', params: { productId: product.id } }">
             <img
-              src="https://picsum.photos/id/403/512/512"
+              :src="product.pictureUrl"
               data-test-product-picture
               class="card-img-top"
             />
@@ -143,7 +143,7 @@ const filteredProductsList = computed(() => {
             </p>
             <p class="card-text" data-test-product-price>Prix actuel : {{ product.originalPrice }} €</p>
           </div>
-        </div>n
+        </div>
       </div>
     </div>
   </div>
