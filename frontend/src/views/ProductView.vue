@@ -118,11 +118,23 @@ async function addBid() {
           },
         }
     );
-    fetchProduct();
-  } catch (e) {
+    if (res.ok) {
+
+      fetchProduct();
+    } else {
+
+      const errorMessage = await res.text();
+      console.error(`Erreur lors de l'ajout de l'offre : ${errorMessage}`);
+      error.value = true;
+    }
+  } catch (error) {
+    // Gérer les erreurs de requête
+    console.error("Erreur lors de la requête d'ajout de l'offre :", error);
     error.value = true;
   }
 }
+
+
 
 </script>
 
@@ -192,18 +204,19 @@ async function addBid() {
 
         <h2 class="mb-3">Informations sur l'enchère</h2>
         <ul>
-          <li data-test-product-price>Prix de départ : {{ product.originalPrice }}</li>
-          <li data-test-product-end-date>Date de fin : {{ formatDate(product.endDate )}}</li>
+          <li data-test-product-price>Prix de départ : {{ product.originalPrice }} €</li>
+          <li data-test-product-end-date>Date de fin : {{ formatDate(product.endDate) }}</li>
           <li>
             Vendeur :
             <router-link
-              :to="{ name: 'User', params: { userId: product.seller.id } }"
-              data-test-product-seller
+                :to="{ name: 'User', params: { userId: product.seller.id } }"
+                data-test-product-seller
             >
-              {{product.seller.username}}
+              {{ product.seller.username }}
             </router-link>
           </li>
         </ul>
+
 
         <h2 class="mb-3">Offres sur le produit</h2>
         <table class="table table-striped" data-test-bids>
