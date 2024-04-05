@@ -19,9 +19,6 @@ const bidsList = ref([]);
 
 let userId = computed(() => route.params.userId);
 
-/**
- * @param {Date} date
- */
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString();
 };
@@ -34,8 +31,12 @@ async function fectchUser() {
     user.value = await res.json();
     productsList.value = user.value.products;
     bidsList.value = user.value.bids;
+    console.log("User data:", user.value);
+    console.log("Products:", productsList.value);
+    console.log("Bids:", bidsList.value);
   } catch (e) {
     error.value = true;
+    console.error("Error fetching user:", e);
   } finally {
     loading.value = false;
   }
@@ -46,7 +47,7 @@ fectchUser();
 <template>
   <div>
     <h1 class="text-center" data-test-username>
-      {{user?.username?? ''}}
+      {{ user?.username ?? "hey" }}
       <span class="badge rounded-pill bg-primary" data-test-admin v-if="isAdmin">Admin</span>
     </h1>
     <div class="text-center" data-test-loading v-if="loading && !error">

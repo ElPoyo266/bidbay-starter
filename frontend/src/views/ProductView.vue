@@ -141,7 +141,7 @@ async function addBid() {
       <!-- Colonne de gauche : image et compte à rebours -->
       <div class="col-lg-4">
         <img
-          src="https://picsum.photos/id/250/512/512"
+            :src="product.pictureUrl"
           alt=""
           class="img-fluid rounded mb-3"
           data-test-product-picture

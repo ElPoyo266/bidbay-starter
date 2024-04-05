@@ -1,7 +1,3 @@
-// Attention !
-// Ne modifier pas ce fichier !
-// Vous risqueriez de compromettre les tests Cypress
-
 import { Bid, Product, User } from '../index.js'
 
 export async function regenerateFixtures () {
