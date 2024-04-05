@@ -1,9 +1,7 @@
 import express from 'express'
 import { Product, Bid, User } from '../orm/index.js'
 import authMiddleware from '../middlewares/auth.js'
-import { getDetails } from '../validators/index.js'
-import product from "../orm/models/product.js";
-import { sequelize } from "../orm/database.js";
+import product from '../orm/models/product.js'
 
 const router = express.Router()
 
@@ -47,7 +45,7 @@ router.get('/api/products/:Id', async (req, res) => {
     }]
   })
   if (product === null) {
-    res.status(400).send('Error : This product does not exist')
+    res.status(404).send('Error : This product does not exist')
   } else {
     res.status(200).send(product)
   }
@@ -55,16 +53,55 @@ router.get('/api/products/:Id', async (req, res) => {
 
 // You can use the authMiddleware with req.user.id to authenticate your endpoint ;)
 
-router.post('/api/products', (req, res) => {
-  res.status(600).send()
+router.post('/api/products', authMiddleware, async (req, res) => {
+  try {
+    req.body.sellerId = req.user.id
+    res.status(201).json(await Product.create(req.body))
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid or missing fields', details: error })
+  }
 })
 
-router.put('/api/products/:productId', async (req, res) => {
-  res.status(600).send()
+router.put('/api/products/:productId', authMiddleware, async (req, res) => {
+  try {
+    const productId = req.params.productId
+    const oldProduct = await Product.findByPk(productId);
+    if (!oldProduct) {
+      return res.status(404).send('Error : This product does not exist')
+    }
+    if (oldProduct.sellerId !== req.user.id && !req.user.admin) {
+      return res.status(403).send('Error : Forbidden')
+    }
+    const newProduct = await oldProduct.update({
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      category: req.body.category,
+      originalPrice: req.body.originalPrice,
+      pictureUrl: req.body.pictureUrl,
+      endDate: req.body.endDate
+    })
+    res.status(200).send(newProduct)
+  } catch (error) {
+    return res.status(403).send('Error : Forbidden ' + error)
+  }
 })
 
-router.delete('/api/products/:productId', async (req, res) => {
-  res.status(600).send()
+router.delete('/api/products/:productId', authMiddleware, async (req, res) => {
+  try {
+    const productId = req.params.productId
+    const deleteProduct = await Product.findByPk(productId)
+    if (!deleteProduct) {
+      return res.status(404).send('Error : This product does not exist')
+    }
+    if (deleteProduct.sellerId !== req.user.id && !req.user.admin) {
+      return res.status(403).send('Error : Forbidden')
+    }
+    await deleteProduct.destroy()
+    res.status(204).send('Error : No Content')
+  } catch (error) {
+    return res.status(403).send('Error : Forbidden ' + error)
+  }
 })
 
 export default router
