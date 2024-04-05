@@ -14,6 +14,7 @@ const error = ref(false);
 const isOwner = ref(false);
 const product = ref({});
 const price = ref(0);
+
 /**
  * @param {number|string|Date|VarDate} date
  */
@@ -44,11 +45,11 @@ async function fetchProduct() {
   }
 }
 
-async function deleteProduct(productId) {
+async function deleteProduct() {
   error.value = false;
   loading.value = true;
   try {
-    await fetch(`http://localhost:3000/api/products/${productId}`, {
+    await fetch(`http://localhost:3000/api/products/${productId.value}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token.value}`,
@@ -63,7 +64,7 @@ async function deleteProduct(productId) {
     loading.value = false;
   }
 }
-fetchProduct();
+
 async function deleteBid(bidId) {
   error.value = false;
   loading.value = true;
@@ -86,6 +87,7 @@ const disabledButtonAddBid = computed(() => {
   const maxPrice = getLastBid.value?.price ?? 10;
   return price.value < maxPrice;
 });
+
 const getLastBid = computed(() => {
   if (product.value.bids.length > 0) {
     return product.value.bids.slice(-1)[0] ?? null;
@@ -119,10 +121,8 @@ async function addBid() {
         }
     );
     if (res.ok) {
-
       fetchProduct();
     } else {
-
       const errorMessage = await res.text();
       console.error(`Erreur lors de l'ajout de l'offre : ${errorMessage}`);
       error.value = true;
@@ -134,9 +134,9 @@ async function addBid() {
   }
 }
 
-
-
+fetchProduct();
 </script>
+
 
 <template>
   <div class="row">

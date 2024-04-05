@@ -7,7 +7,6 @@ const sort = ref("nom");
 const productsList = ref([]);
 const filter = ref("");
 
-
 async function fetchProducts() {
   loading.value = true;
   error.value = false;
@@ -36,6 +35,16 @@ function getEndDateDisplay(date) {
   };
   return endDate.toLocaleDateString("fr-FR", options);
 }
+
+async function currentPrice(product) {
+  if (product.bids.length > 0) {
+    const lastBid = product.bids[product.bids.length - 1];
+    return lastBid.price;
+  } else {
+    return product.originalPrice;
+  }
+}
+
 fetchProducts();
 
 const filteredProductsList = computed(() => {

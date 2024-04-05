@@ -70,12 +70,12 @@ fectchUser();
             >
               <div class="card">
                 <RouterLink
-                  :to="{ name: 'Product', params: { productId: product.id } }"
+                    :to="{ name: 'Product', params: { productId: product.id } }"
                 >
                   <img
-                    src="https://image.noelshack.com/fichiers/2023/12/4/1679526253-65535-51925549650-96f088a093-b-512-512-nofilter.jpg"
-                    class="card-img-top"
-                    data-test-product-picture
+                      :src="product.pictureUrl"
+                      class="card-img-top"
+                      data-test-product-picture
                   />
                 </RouterLink>
                 <div class="card-body">
