@@ -65,7 +65,7 @@ router.post('/api/products', authMiddleware, async (req, res) => {
 router.put('/api/products/:productId', authMiddleware, async (req, res) => {
   try {
     const productId = req.params.productId
-    const oldProduct = await Product.findByPk(productId);
+    const oldProduct = await Product.findByPk(productId)
     if (!oldProduct) {
       return res.status(404).send('Error : This product does not exist')
     }
