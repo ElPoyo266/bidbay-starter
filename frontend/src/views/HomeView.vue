@@ -108,20 +108,20 @@ const filteredProductsList = computed(() => {
       Une erreur est survenue lors du chargement des produits.
     </div>
     <div class="row" v-else>
-      <div class="col-md-4 mb-4" v-for="product in filteredProductsList" data-test-product :key="product">
+      <div class="col-md-4 mb-4" v-for="product in filteredProductsList" data-test-product :key="product.id">
         <div class="card">
           <RouterLink :to="{ name: 'Product', params: { productId: product.id } }">
             <img
-              src="https://picsum.photos/id/403/512/512"
-              data-test-product-picture
-              class="card-img-top"
+                src="https://picsum.photos/id/403/512/512"
+                data-test-product-picture
+                class="card-img-top"
             />
           </RouterLink>
           <div class="card-body">
             <h5 class="card-title">
               <RouterLink
-                data-test-product-name
-                :to="{ name: 'Product', params: { productId: product.id } }"
+                  data-test-product-name
+                  :to="{ name: 'Product', params: { productId: product.id } }"
               >
                 {{ product.name }}
               </RouterLink>
@@ -132,8 +132,8 @@ const filteredProductsList = computed(() => {
             <p class="card-text">
               Vendeur :
               <RouterLink
-                data-test-product-seller
-                :to="{ name: 'User', params: { userId: product.sellerId } }"
+                  data-test-product-seller
+                  :to="{ name: 'User', params: { userId: product.sellerId } }"
               >
                 {{ product.seller.username }}
               </RouterLink>
@@ -143,7 +143,7 @@ const filteredProductsList = computed(() => {
             </p>
             <p class="card-text" data-test-product-price>Prix actuel : {{ product.originalPrice }} €</p>
           </div>
-        </div>n
+        </div>
       </div>
     </div>
   </div>
