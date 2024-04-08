@@ -1,0 +1,105 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passes": 1,
+    "pending": 0,
+    "failures": 0,
+    "start": "2024-04-08T09:16:25.214Z",
+    "end": "2024-04-08T09:16:25.618Z",
+    "duration": 404,
+    "testsRegistered": 1,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "dcc2eb0f-d0c6-48cf-8ee5-6d394b546de2",
+      "title": "",
+      "fullFile": "cypress\\e2e\\meta\\authors.cy.js",
+      "file": "cypress\\e2e\\meta\\authors.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "8f59b986-cf4c-41d9-ae7a-9d309fe8b66b",
+          "title": "Meta",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "Remplisser les infos de votre groupe dans frontend/meta/authors.js",
+              "fullTitle": "Meta Remplisser les infos de votre groupe dans frontend/meta/authors.js",
+              "timedOut": null,
+              "duration": 356,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "expect(_authors.authors).to.not.deep.eq([\"John Doe (p12345678)\", \"Jane Doe (p12345678)\"]);\nexpect(_authors.group).to.oneOf([1, 2, 3]);",
+              "err": {},
+              "uuid": "4f1cd159-6ee2-484a-87b4-f8b7fced8ae9",
+              "parentUUID": "8f59b986-cf4c-41d9-ae7a-9d309fe8b66b",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "4f1cd159-6ee2-484a-87b4-f8b7fced8ae9"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 356,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.0.1"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress/results",
+        "overwrite": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}
