@@ -14,6 +14,7 @@ const error = ref(false);
 const isOwner = ref(false);
 const product = ref({});
 const price = ref(0);
+
 /**
  * @param {number|string|Date|VarDate} date
  */
@@ -44,11 +45,11 @@ async function fetchProduct() {
   }
 }
 
-async function deleteProduct(productId) {
+async function deleteProduct() {
   error.value = false;
   loading.value = true;
   try {
-    await fetch(`http://localhost:3000/api/products/${productId}`, {
+    await fetch(`http://localhost:3000/api/products/${productId.value}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token.value}`,
@@ -63,7 +64,7 @@ async function deleteProduct(productId) {
     loading.value = false;
   }
 }
-fetchProduct();
+
 async function deleteBid(bidId) {
   error.value = false;
   loading.value = true;
@@ -86,6 +87,7 @@ const disabledButtonAddBid = computed(() => {
   const maxPrice = getLastBid.value?.price ?? 10;
   return price.value < maxPrice;
 });
+
 const getLastBid = computed(() => {
   if (product.value.bids.length > 0) {
     return product.value.bids.slice(-1)[0] ?? null;
@@ -118,13 +120,23 @@ async function addBid() {
           },
         }
     );
-    fetchProduct();
-  } catch (e) {
+    if (res.ok) {
+      fetchProduct();
+    } else {
+      const errorMessage = await res.text();
+      console.error(`Erreur lors de l'ajout de l'offre : ${errorMessage}`);
+      error.value = true;
+    }
+  } catch (error) {
+    // Gérer les erreurs de requête
+    console.error("Erreur lors de la requête d'ajout de l'offre :", error);
     error.value = true;
   }
 }
 
+fetchProduct();
 </script>
+
 
 <template>
   <div class="row">
@@ -141,7 +153,7 @@ async function addBid() {
       <!-- Colonne de gauche : image et compte à rebours -->
       <div class="col-lg-4">
         <img
-          src="https://picsum.photos/id/250/512/512"
+            :src="product.pictureUrl"
           alt=""
           class="img-fluid rounded mb-3"
           data-test-product-picture
@@ -192,18 +204,19 @@ async function addBid() {
 
         <h2 class="mb-3">Informations sur l'enchère</h2>
         <ul>
-          <li data-test-product-price>Prix de départ : {{ product.originalPrice }}</li>
-          <li data-test-product-end-date>Date de fin : {{ formatDate(product.endDate )}}</li>
+          <li data-test-product-price>Prix de départ : {{ product.originalPrice }} €</li>
+          <li data-test-product-end-date>Date de fin : {{ formatDate(product.endDate) }}</li>
           <li>
             Vendeur :
             <router-link
-              :to="{ name: 'User', params: { userId: product.seller.id } }"
-              data-test-product-seller
+                :to="{ name: 'User', params: { userId: product.seller.id } }"
+                data-test-product-seller
             >
-              {{product.seller.username}}
+              {{ product.seller.username }}
             </router-link>
           </li>
         </ul>
+
 
         <h2 class="mb-3">Offres sur le produit</h2>
         <table class="table table-striped" data-test-bids>

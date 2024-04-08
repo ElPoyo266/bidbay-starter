@@ -27,21 +27,28 @@ async function addProduct() {
         "Content-Type": "application/json",
       },
     });
-    const product = await res.json();
-    await router.push({
-      name: "Product",
-      params: { productId: product.id },
-    });
+    if (res.ok) {
+      // Si la soumission réussit, redirige vers la page du produit ajouté
+      const product = await res.json();
+      await router.push({
+        name: "Product",
+        params: { productId: product.id },
+      });
+    } else {
+      // Si la soumission échoue, définissez le message d'erreur approprié
+      errorMessage.value = "Une erreur s'est produite lors de l'ajout du produit.";
+    }
   } catch (e) {
-    errorMessage.value=true
+    // Gestion des erreurs de requête
+    errorMessage.value = "Une erreur s'est produite lors de la requête.";
   } finally {
     spinner.value = false;
   }
 }
+
 if (!isAuthenticated.value) {
   router.push({ name: "Login" });
 }
-
 
 </script>
 
@@ -51,8 +58,8 @@ if (!isAuthenticated.value) {
   <div class="row justify-content-center">
     <div class="col-md-6">
       <form @submit.prevent="addProduct">
-        <div class="alert alert-danger mt-4" role="alert" data-test-error>
-          Une erreur s'est produite
+        <div class="alert alert-danger mt-4" role="alert" data-test-error v-if="errorMessage">
+          {{ errorMessage }}
         </div>
 
         <div class="mb-3">
@@ -146,11 +153,12 @@ if (!isAuthenticated.value) {
 
         <div class="d-grid gap-2">
           <button
-            type="submit"
-            class="btn btn-primary"
-            data-test-submit
+              type="submit"
+              class="btn btn-primary"
+              data-test-submit
+              :disabled="spinner"
           >
-            Ajouter le produit
+          Ajouter le produit
             <span
               data-test-spinner
               class="spinner-border spinner-border-sm"
