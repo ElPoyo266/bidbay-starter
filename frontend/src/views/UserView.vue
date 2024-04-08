@@ -4,78 +4,88 @@ import { useRoute, useRouter } from "vue-router";
 
 import { useAuthStore } from "../store/auth";
 
-// eslint-disable-next-line no-unused-vars
-const { isAdmin, username } = useAuthStore();
+const { isAuthenticated, isAdmin, userData } = useAuthStore();
 
-// eslint-disable-next-line no-unused-vars
+const user = ref({});
+const bids = ref([]);
 const router = useRouter();
 const route = useRoute();
 
-const user = ref(null);
-const loading = ref(false);
-const error = ref(null);
-const productsList = ref([]);
-const bidsList = ref([]);
+const loading = ref(true);
+const error = ref(false);
 
-let userId = computed(() => route.params.userId);
+const userID_DATA = computed(() => userData.value ? userData.value.id : null);
+const userID_URL = computed(() => route.params.userId);
+const url_admin = ref(false);
 
+/**
+ * @param {Date} date
+ */
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString();
 };
 
-async function fectchUser() {
-  loading.value = true;
-  error.value = false;
+async function fetchData(link) {
+  if (!link) return;
   try {
-    const res = await fetch(`http://localhost:3000/api/users/${userId.value}`);
-    user.value = await res.json();
-    productsList.value = user.value.products;
-    bidsList.value = user.value.bids;
-    console.log("User data:", user.value);
-    console.log("Products:", productsList.value);
-    console.log("Bids:", bidsList.value);
+    const response = await fetch("http://localhost:3000/api/users/" + link);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error);
+    } else {
+      user.value = data;
+      bids.value = data.bids;
+      if (data.admin) {
+        url_admin.value = true;
+      }
+    }
   } catch (e) {
     error.value = true;
-    console.error("Error fetching user:", e);
+    console.error("Une erreur est survenue lors du chargement des données :", e);
   } finally {
     loading.value = false;
   }
 }
-fectchUser();
+
+fetchData(userID_URL.value != "me" ? userID_URL.value : userID_DATA.value);
+
 </script>
 
+
 <template>
+
+
   <div>
+
     <h1 class="text-center" data-test-username>
-      {{ user?.username ?? "hey" }}
-      <span class="badge rounded-pill bg-primary" data-test-admin v-if="isAdmin">Admin</span>
+      Utilisateur {{ user.username }}
+      <span v-if="isAdmin || url_admin" class="badge rounded-pill bg-primary" data-test-admin>Admin</span>
     </h1>
-    <div class="text-center" data-test-loading v-if="loading && !error">
+    <div v-if="loading" class="text-center" data-test-loading>
       <span class="spinner-border"></span>
       <span>Chargement en cours...</span>
     </div>
-    <div class="alert alert-danger mt-3" data-test-error v-if="error">
+    <div v-if="error" class="alert alert-danger mt-3" data-test-error>
       Une erreur est survenue
     </div>
-    <div data-test-view v-if="!loading && !error">
+    <div v-if="!loading && !error" data-test-view>
       <div class="row">
         <div class="col-lg-6">
           <h2>Produits</h2>
-          <div class="row">
+          <div v-if="!loading" class="row">
             <div
               class="col-md-6 mb-6 py-2"
-              v-for="product in productsList"
-              :key="product"
-              data-test-product
+              v-for="product in user.products" data-test-product
             >
               <div class="card">
                 <RouterLink
-                    :to="{ name: 'Product', params: { productId: product.id } }"
+                  :to="{ name: 'Product', params: { productId: product.id } }"
                 >
                   <img
-                      :src="product.pictureUrl"
-                      class="card-img-top"
-                      data-test-product-picture
+                    :src="product.pictureUrl"
+                    class="card-img-top"
+                    data-test-product-picture
                   />
                 </RouterLink>
                 <div class="card-body">
@@ -94,7 +104,7 @@ fectchUser();
                     {{ product.description }}
                   </p>
                   <p class="card-text" data-test-product-price>
-                    Prix de départ : {{product.originalPrice}} €
+                    Prix de départ : {{ product.originalPrice }} €
                   </p>
                 </div>
               </div>
@@ -105,28 +115,28 @@ fectchUser();
           <h2>Offres</h2>
           <table class="table table-striped">
             <thead>
-              <tr>
-                <th scope="col">Produit</th>
-                <th scope="col">Offre</th>
-                <th scope="col">Date</th>
-              </tr>
+            <tr>
+              <th scope="col">Produit</th>
+              <th scope="col">Offre</th>
+              <th scope="col">Date</th>
+            </tr>
             </thead>
             <tbody>
-              <tr v-for="bid in bidsList" :key="bid" data-test-bid>
-                <td>
-                  <RouterLink
-                    :to="{
+            <tr v-for="bid in bids" data-test-bid>
+              <td>
+                <RouterLink
+                  :to="{
                       name: 'Product',
                       params: { productId: bid.product.id },
                     }"
-                    data-test-bid-product
-                  >
-                    {{bid.product.name}}
-                  </RouterLink>
-                </td>
-                <td data-test-bid-price> {{bid.price}} €</td>
-                <td data-test-bid-date>{{ formatDate(bid.date) }}</td>
-              </tr>
+                  data-test-bid-product
+                >
+                  {{ bid.product.name }}
+                </RouterLink>
+              </td>
+              <td data-test-bid-price>{{ bid.price }} €</td>
+              <td data-test-bid-date>{{ formatDate(bid.date) }}</td>
+            </tr>
             </tbody>
           </table>
         </div>
