@@ -9,6 +9,11 @@ const route = useRoute();
 const router = useRouter();
 
 const productId = ref(route.params.productId);
+const loading = ref(false);
+const error = ref(false);
+const isOwner = ref(false);
+const product = ref({});
+const price = ref(0);
 
 /**
  * @param {number|string|Date|VarDate} date
@@ -17,7 +22,121 @@ function formatDate(date) {
   const options = { year: "numeric", month: "long", day: "numeric" };
   return new Date(date).toLocaleDateString("fr-FR", options);
 }
+
+async function fetchProduct() {
+  error.value = false;
+  loading.value = true;
+  try {
+    const res = await fetch(
+        `http://localhost:3000/api/products/${productId.value}`
+    );
+    product.value = await res.json();
+    const lastBid = getLastBid.value;
+    if (lastBid) {
+      price.value = lastBid.price + 1;
+    }
+    if (isAuthenticated.value && userData.value.id === product.value.sellerId) {
+      isOwner.value = true;
+    }
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteProduct() {
+  error.value = false;
+  loading.value = true;
+  try {
+    await fetch(`http://localhost:3000/api/products/${productId.value}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
+    await router.push({
+      name: "Home",
+    });
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteBid(bidId) {
+  error.value = false;
+  loading.value = true;
+  try {
+    await fetch(`http://localhost:3000/api/bids/${bidId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
+    fetchProduct();
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+const disabledButtonAddBid = computed(() => {
+  const maxPrice = getLastBid.value?.price ?? 10;
+  return price.value < maxPrice;
+});
+
+const getLastBid = computed(() => {
+  if (product.value.bids.length > 0) {
+    return product.value.bids.slice(-1)[0] ?? null;
+  }
+  return null;
+});
+
+function getTimeDifference(endDate) {
+  const endDateObj = new Date(endDate);
+  const currentDateObj = new Date();
+
+  const differenceInMs = endDateObj - currentDateObj;
+  const days = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((differenceInMs / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((differenceInMs / (1000 * 60)) % 60);
+
+  return `${days}j ${hours}h ${minutes}min`;
+}
+
+async function addBid() {
+  try {
+    const res = await fetch(
+        `http://localhost:3000/api/products/${productId.value}/bids`,
+        {
+          method: "POST",
+          body: JSON.stringify({ price: price.value }),
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+            "Content-Type": "application/json",
+          },
+        }
+    );
+    if (res.ok) {
+      fetchProduct();
+    } else {
+      const errorMessage = await res.text();
+      console.error(`Erreur lors de l'ajout de l'offre : ${errorMessage}`);
+      error.value = true;
+    }
+  } catch (error) {
+    // Gérer les erreurs de requête
+    console.error("Erreur lors de la requête d'ajout de l'offre :", error);
+    error.value = true;
+  }
+}
+
+fetchProduct();
 </script>
+
 
 <template>
   <div class="row">
@@ -30,11 +149,11 @@ function formatDate(date) {
     <div class="alert alert-danger mt-4" role="alert" data-test-error>
       Une erreur est survenue lors du chargement des produits.
     </div>
-    <div class="row" data-test-product>
+    <div class="row" data-test-product v-if="!loading && !error">
       <!-- Colonne de gauche : image et compte à rebours -->
       <div class="col-lg-4">
         <img
-          src="https://picsum.photos/id/250/512/512"
+            :src="product.pictureUrl"
           alt=""
           class="img-fluid rounded mb-3"
           data-test-product-picture
@@ -45,7 +164,11 @@ function formatDate(date) {
           </div>
           <div class="card-body">
             <h6 class="card-subtitle mb-2 text-muted" data-test-countdown>
-              Temps restant : {{ countdown }}
+              Temps restant :{{
+                formatDate(product.endDate) > formatDate(Date.now())
+                    ? getTimeDifference(product.endDate)
+                    : "Terminé"
+              }}
             </h6>
           </div>
         </div>
@@ -56,19 +179,19 @@ function formatDate(date) {
         <div class="row">
           <div class="col-lg-6">
             <h1 class="mb-3" data-test-product-name>
-              Appareil photo argentique
+              {{ product.name }}
             </h1>
           </div>
           <div class="col-lg-6 text-end">
             <RouterLink
-              :to="{ name: 'ProductEdition', params: { productId: 'TODO' } }"
+              :to="{ name: 'ProductEdition', params: { productId: productId } }"
               class="btn btn-primary"
               data-test-edit-product
             >
               Editer
             </RouterLink>
             &nbsp;
-            <button class="btn btn-danger" data-test-delete-product>
+            <button class="btn btn-danger" data-test-delete-produc @click.prevent="deleteProduct(productId)">
               Supprimer
             </button>
           </div>
@@ -76,24 +199,24 @@ function formatDate(date) {
 
         <h2 class="mb-3">Description</h2>
         <p data-test-product-description>
-          Appareil photo argentique classique, parfait pour les amateurs de
-          photographie
+          {{ product.description}}
         </p>
 
         <h2 class="mb-3">Informations sur l'enchère</h2>
         <ul>
-          <li data-test-product-price>Prix de départ : 17 €</li>
-          <li data-test-product-end-date>Date de fin : 20 juin 2026</li>
+          <li data-test-product-price>Prix de départ : {{ product.originalPrice }} €</li>
+          <li data-test-product-end-date>Date de fin : {{ formatDate(product.endDate) }}</li>
           <li>
             Vendeur :
             <router-link
-              :to="{ name: 'User', params: { userId: 'TODO' } }"
-              data-test-product-seller
+                :to="{ name: 'User', params: { userId: product.seller.id } }"
+                data-test-product-seller
             >
-              alice
+              {{ product.seller.username }}
             </router-link>
           </li>
         </ul>
+
 
         <h2 class="mb-3">Offres sur le produit</h2>
         <table class="table table-striped" data-test-bids>
@@ -106,28 +229,31 @@ function formatDate(date) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="i in 10" :key="i" data-test-bid>
+            <tr v-for="bid in product.bids" :key="bid" data-test-bid>
               <td>
                 <router-link
-                  :to="{ name: 'User', params: { userId: 'TODO' } }"
+                  :to="{ name: 'User', params: { userId: bid.bidder.id } }"
                   data-test-bid-bidder
                 >
-                  charly
+                  {{bid.bidder.username}}
                 </router-link>
               </td>
-              <td data-test-bid-price>43 €</td>
-              <td data-test-bid-date>22 mars 2026</td>
+              <td data-test-bid-price>{{ bid.price }} €</td>
+              <td data-test-bid-date> {{formatDate(bid.date)}}</td>
               <td>
-                <button class="btn btn-danger btn-sm" data-test-delete-bid>
+                <button class="btn btn-danger btn-sm" data-test-delete-bid v-if="
+                    isAdmin ||
+                    (isAuthenticated && userData.id === bid.bidder.id)"
+                        @click="deleteBid(bid.id)">
                   Supprimer
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
-        <p data-test-no-bids>Aucune offre pour le moment</p>
+        <p data-test-no-bids v-if="product.bids.length===0">Aucune offre pour le moment</p>
 
-        <form data-test-bid-form>
+        <form data-test-bid-form @submit.prevent="addBid">
           <div class="form-group">
             <label for="bidAmount">Votre offre :</label>
             <input
@@ -135,6 +261,7 @@ function formatDate(date) {
               class="form-control"
               id="bidAmount"
               data-test-bid-form-price
+              v-model="price"
             />
             <small class="form-text text-muted">
               Le montant doit être supérieur à 10 €.
@@ -143,7 +270,7 @@ function formatDate(date) {
           <button
             type="submit"
             class="btn btn-primary"
-            disabled
+            :disabled="disabledButtonAddBid"
             data-test-submit-bid
           >
             Enchérir

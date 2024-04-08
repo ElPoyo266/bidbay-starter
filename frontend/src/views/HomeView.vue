@@ -3,21 +3,92 @@ import { ref, computed } from "vue";
 
 const loading = ref(false);
 const error = ref(false);
+const products = ref([]);
+const sorterLabel = ref("nom");
+const searchQuery = ref("");
+
+
+const filteredProducts = computed(() => {
+  const searchTerm = searchQuery.value.toLowerCase();
+  return products.value.filter(product => {
+    return product.name.toLowerCase().includes(searchTerm);
+  });
+});
+
+// récuperation de tout les produits
 
 async function fetchProducts() {
-  loading.value = true;
-  error.value = false;
-
   try {
+    loading.value = true;
+    const response = await fetch("http://localhost:3000/api/products");
+    const data = await response.json();
+
+    if (!response.ok || data.length<1) {
+      throw new Error(data.error);
+    } else {
+      console.log(data.length)
+      products.value = data;
+      console.error("Data récupérée");
+      sortProductsByName()
+    }
   } catch (e) {
     error.value = true;
+    console.error("Une erreur est survenue lors du chargement des produits :", e);
   } finally {
     loading.value = false;
   }
 }
 
+// leurs dernier bid
+
+function fetchLastBid(product) {
+  if (!product || !product.bids || product.bids.length === 0) {
+    return product.originalPrice;
+  } else {
+    const sortedBids = product.bids.sort((a, b) => b.price - a.price);
+    return sortedBids[0] ? sortedBids[0].price : null;
+  }
+}
+
+// sort par nom
+
+function sortProductsByName() {
+  sorterLabel.value = "nom";
+  products.value.sort((a, b) => {
+    const nameA = a.name.toUpperCase();
+    const nameB = b.name.toUpperCase();
+    if (nameA < nameB) {
+      return -1;
+    }
+    if (nameA > nameB) {
+      return 1;
+    }
+    return 0;
+  });
+}
+
+// sort par prix
+
+function sortProductsByPrice() {
+  products.value.sort((a, b) => {
+    sorterLabel.value = "prix";
+    return fetchLastBid(a) - fetchLastBid(b);
+  });
+}
+
+function currentPrice(product) {
+  if (product.bids.length > 0) {
+    const lastBid = product.bids[product.bids.length - 1];
+    return lastBid.price;
+  } else {
+    console.log(product.originalPrice);
+    return product.originalPrice;
+  }
+}
+
 fetchProducts();
 </script>
+
 
 <template>
   <div>
@@ -33,6 +104,7 @@ fetchProducts();
               class="form-control"
               placeholder="Filtrer par nom"
               data-test-filter
+              v-model="searchQuery"
             />
           </div>
         </form>
@@ -46,14 +118,14 @@ fetchProducts();
             aria-expanded="false"
             data-test-sorter
           >
-            Trier par nom
+            Trier par {{ sorterLabel }}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a class="dropdown-item" href="#"> Nom </a>
+              <a class="dropdown-item" href="#" @click="sortProductsByName"> Nom </a>
             </li>
             <li>
-              <a class="dropdown-item" href="#" data-test-sorter-price>
+              <a class="dropdown-item" href="#" @click="sortProductsByPrice" data-test-sorter-price>
                 Prix
               </a>
             </li>
@@ -62,50 +134,47 @@ fetchProducts();
       </div>
     </div>
 
-    <div class="text-center mt-4" data-test-loading>
+    <div v-if="loading" class="text-center mt-4" data-test-loading>
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Chargement...</span>
       </div>
     </div>
 
-    <div class="alert alert-danger mt-4" role="alert" data-test-error>
+    <div v-if="error" class="alert alert-danger mt-4" role="alert" data-test-error>
       Une erreur est survenue lors du chargement des produits.
     </div>
-    <div class="row">
-      <div class="col-md-4 mb-4" v-for="i in 10" data-test-product :key="i">
+    <div v-if="!loading && !error" class="row">
+      <div class="col-md-4 mb-4" v-for="item in filteredProducts" data-test-product>
         <div class="card">
-          <RouterLink :to="{ name: 'Product', params: { productId: 'TODO' } }">
+          <RouterLink :to="{ name: 'Product', params: { productId: item.id } }">
             <img
-              src="https://picsum.photos/id/403/512/512"
+              :src="item.pictureUrl"
               data-test-product-picture
-              class="card-img-top"
-            />
+              class="card-img-top"/>
           </RouterLink>
           <div class="card-body">
             <h5 class="card-title">
               <RouterLink
                 data-test-product-name
-                :to="{ name: 'Product', params: { productId: 'TODO' } }"
-              >
-                Machine à écrire
+                :to="{ name: 'Product', params: { productId: item.id } }">
+                {{item.name}}
               </RouterLink>
             </h5>
             <p class="card-text" data-test-product-description>
-              Machine à écrire vintage en parfait état de fonctionnement
+              {{item.description}}
             </p>
             <p class="card-text">
               Vendeur :
               <RouterLink
                 data-test-product-seller
-                :to="{ name: 'User', params: { userId: 'TODO' } }"
-              >
-                alice
+                :to="{ name: 'User', params: { userId: item.seller.id } }">
+                {{ products[item.id] ? products[item.id].seller.username : 'alice' }}
               </RouterLink>
             </p>
             <p class="card-text" data-test-product-date>
-              En cours jusqu'au 05/04/2026
+              En cours jusqu'au Terminé <br> {{ item.endDate.split('T')[0] }}
             </p>
-            <p class="card-text" data-test-product-price>Prix actuel : 42 €</p>
+            <p class="card-text" data-test-product-price>Prix de départ Prix actuel : {{ item.id ? fetchLastBid(item) : 'Chargement...' }} €</p>
           </div>
         </div>
       </div>

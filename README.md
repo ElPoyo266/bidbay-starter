@@ -679,31 +679,19 @@ Menu de navigation
 
 ## Get started
 
-### Javascript vs Typescript
-La version typescript est disponible dans la branche `main-ts`.
-Si vous l'utilisez, il faudra la merge dans la branche `main`.
-
 ### Lancer le frontend
 
 ```
 cd frontend/
 npm install
 npm run dev
-# Your frontend server is on localhost:5173
-```
-
-Si jamais votre serveur n'est pas accessible depuis Cypress, vous pouvez tester cette commande
-```
-npm run dev:workaround
 ```
 
 ### Lancer le backend
 
 ```
 cd backend/
-npm install
 npm start
-# Your backend server is on localhost:3000
 ```
 
 ### Lancer les tests
@@ -712,13 +700,6 @@ npm start
 cd frontend/
 npm run test
 ```
-
-### Lancer le reporting des tests
-```
-cd frontend/
-npm run test-report
-```
-Les fichiers générés doivent être ajoutés dans votre repo
 
 ### Données
 

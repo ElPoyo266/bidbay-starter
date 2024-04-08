@@ -26,7 +26,7 @@ const router = express.Router()
  */
 router.post('/api/auth/register', async (req, res) => {
   try {
-    /** @type {RegisterRequestBody} */
+    /** @type {ReqBody} */
     const reqBody = req.body
     const { username, email, password } = reqBody
 
