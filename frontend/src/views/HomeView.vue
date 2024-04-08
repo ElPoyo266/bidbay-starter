@@ -75,6 +75,17 @@ function sortProductsByPrice() {
     return fetchLastBid(a) - fetchLastBid(b);
   });
 }
+
+function currentPrice(product) {
+  if (product.bids.length > 0) {
+    const lastBid = product.bids[product.bids.length - 1];
+    return lastBid.price;
+  } else {
+    console.log(product.originalPrice);
+    return product.originalPrice;
+  }
+}
+
 fetchProducts();
 </script>
 
@@ -163,7 +174,7 @@ fetchProducts();
             <p class="card-text" data-test-product-date>
               En cours jusqu'au Terminé <br> {{ item.endDate.split('T')[0] }}
             </p>
-            <p class="card-text" data-test-product-price>Prix actuel : {{ item.id ? fetchLastBid(item) : 'Chargement...' }} €</p>
+            <p class="card-text" data-test-product-price>Prix de départ Prix actuel : {{ item.id ? fetchLastBid(item) : 'Chargement...' }} €</p>
           </div>
         </div>
       </div>
