@@ -3,65 +3,81 @@ import { ref, computed } from "vue";
 
 const loading = ref(false);
 const error = ref(false);
-const sort = ref("nom");
-const productsList = ref([]);
-const filter = ref("");
+const products = ref([]);
+const sorterLabel = ref("nom");
+const searchQuery = ref("");
+
+
+const filteredProducts = computed(() => {
+  const searchTerm = searchQuery.value.toLowerCase();
+  return products.value.filter(product => {
+    return product.name.toLowerCase().includes(searchTerm);
+  });
+});
+
+// récuperation de tout les produits
 
 async function fetchProducts() {
-  loading.value = true;
-  error.value = false;
   try {
-    const res = await fetch("http://localhost:3000/api/products/");
-    productsList.value = await res.json();
+    loading.value = true;
+    const response = await fetch("http://localhost:3000/api/products");
+    const data = await response.json();
+
+    if (!response.ok || data.length<1) {
+      throw new Error(data.error);
+    } else {
+      console.log(data.length)
+      products.value = data;
+      console.error("Data récupérée");
+      sortProductsByName()
+    }
   } catch (e) {
     error.value = true;
+    console.error("Une erreur est survenue lors du chargement des produits :", e);
   } finally {
     loading.value = false;
   }
 }
 
-function getEndDateDisplay(date) {
-  const endDate = new Date(date);
-  if (endDate < new Date()) {
-    return "la vente est Terminé";
-  }
-  const options = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    timeZone: "Europe/Paris",
-  };
-  return endDate.toLocaleDateString("fr-FR", options);
-}
+// leurs dernier bid
 
-async function currentPrice(product) {
-  if (product.bids.length > 0) {
-    const lastBid = product.bids[product.bids.length - 1];
-    return lastBid.price;
-  } else {
+function fetchLastBid(product) {
+  if (!product || !product.bids || product.bids.length === 0) {
     return product.originalPrice;
+  } else {
+    const sortedBids = product.bids.sort((a, b) => b.price - a.price);
+    return sortedBids[0] ? sortedBids[0].price : null;
   }
 }
 
-fetchProducts();
+// sort par nom
 
-const filteredProductsList = computed(() => {
-  const list = productsList.value;
-  if (sort.value === "nom") {
-    list.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (sort.value === "prix") {
-    list.sort((a, b) => a.originalPrice - b.originalPrice);
-  }
-  if (filter.value !== "") {
-    return list.filter((product) =>
-        product.name.toLowerCase().includes(filter.value.toLowerCase())
-    );
-  }
-  return list;
-});
+function sortProductsByName() {
+  sorterLabel.value = "nom";
+  products.value.sort((a, b) => {
+    const nameA = a.name.toUpperCase();
+    const nameB = b.name.toUpperCase();
+    if (nameA < nameB) {
+      return -1;
+    }
+    if (nameA > nameB) {
+      return 1;
+    }
+    return 0;
+  });
+}
+
+// sort par prix
+
+function sortProductsByPrice() {
+  products.value.sort((a, b) => {
+    sorterLabel.value = "prix";
+    return fetchLastBid(a) - fetchLastBid(b);
+  });
+}
+fetchProducts();
 </script>
+
 
 <template>
   <div>
@@ -73,11 +89,11 @@ const filteredProductsList = computed(() => {
           <div class="input-group">
             <span class="input-group-text">Filtrage</span>
             <input
-              v-model="filter"
               type="text"
               class="form-control"
               placeholder="Filtrer par nom"
               data-test-filter
+              v-model="searchQuery"
             />
           </div>
         </form>
@@ -91,14 +107,14 @@ const filteredProductsList = computed(() => {
             aria-expanded="false"
             data-test-sorter
           >
-            Trier par {{ sort }}
+            Trier par {{ sorterLabel }}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a class="dropdown-item" href="#" @click="sort = 'nom'"> Nom </a>
+              <a class="dropdown-item" href="#" @click="sortProductsByName"> Nom </a>
             </li>
             <li>
-              <a class="dropdown-item" href="#" data-test-sorter-price @click="sort = 'prix'">
+              <a class="dropdown-item" href="#" @click="sortProductsByPrice" data-test-sorter-price>
                 Prix
               </a>
             </li>
@@ -107,7 +123,7 @@ const filteredProductsList = computed(() => {
       </div>
     </div>
 
-    <div class="text-center mt-4" data-test-loading v-if="loading && !error">
+    <div v-if="loading" class="text-center mt-4" data-test-loading>
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Chargement...</span>
       </div>
@@ -116,41 +132,38 @@ const filteredProductsList = computed(() => {
     <div v-if="error" class="alert alert-danger mt-4" role="alert" data-test-error>
       Une erreur est survenue lors du chargement des produits.
     </div>
-    <div class="row" v-else>
-      <div class="col-md-4 mb-4" v-for="product in filteredProductsList" data-test-product :key="product.id">
+    <div v-if="!loading && !error" class="row">
+      <div class="col-md-4 mb-4" v-for="item in filteredProducts" data-test-product>
         <div class="card">
-          <RouterLink :to="{ name: 'Product', params: { productId: product.id } }">
+          <RouterLink :to="{ name: 'Product', params: { productId: item.id } }">
             <img
-                src="https://picsum.photos/id/403/512/512"
-                data-test-product-picture
-                class="card-img-top"
-            />
+              :src="item.pictureUrl"
+              data-test-product-picture
+              class="card-img-top"/>
           </RouterLink>
           <div class="card-body">
             <h5 class="card-title">
               <RouterLink
-                  data-test-product-name
-                  :to="{ name: 'Product', params: { productId: product.id } }"
-              >
-                {{ product.name }}
+                data-test-product-name
+                :to="{ name: 'Product', params: { productId: item.id } }">
+                {{item.name}}
               </RouterLink>
             </h5>
             <p class="card-text" data-test-product-description>
-              {{ product.description }}
+              {{item.description}}
             </p>
             <p class="card-text">
               Vendeur :
               <RouterLink
-                  data-test-product-seller
-                  :to="{ name: 'User', params: { userId: product.sellerId } }"
-              >
-                {{ product.seller.username }}
+                data-test-product-seller
+                :to="{ name: 'User', params: { userId: item.seller.id } }">
+                {{ products[item.id] ? products[item.id].seller.username : 'alice' }}
               </RouterLink>
             </p>
             <p class="card-text" data-test-product-date>
-              En cours jusqu'au {{ getEndDateDisplay(product.endDate) }}
+              En cours jusqu'au Terminé <br> {{ item.endDate.split('T')[0] }}
             </p>
-            <p class="card-text" data-test-product-price>Prix actuel : {{ product.originalPrice }} €</p>
+            <p class="card-text" data-test-product-price>Prix actuel : {{ item.id ? fetchLastBid(item) : 'Chargement...' }} €</p>
           </div>
         </div>
       </div>
